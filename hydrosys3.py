@@ -5,16 +5,15 @@ from i2c_lcd import I2cLcd
 from machine import I2C
 import json
 
-class pH:
+class pH: #Reads and calibrates pH sensor
     sensor = ADC(Pin(39))
     sensor.atten(ADC.ATTN_11DB)
     sensor.width(3)
     calibration_value = 0
-    #calibration_value = config.data['pH_config']
     def get_volts():
         voltage = (pH.sensor.read()/4095) * 3.3
         return voltage
-    def display_values():
+    def display_values(): #Debug feature
         while True:
             volts = pH.get_volts()
             output_pH = pH.average_pH(100)
@@ -41,25 +40,20 @@ class pH:
         avg_voltage = avg_voltage / 100
         pH.calibration_value = 7 / avg_voltage
         config.update('pH_config', pH.calibration_value)
-        print(f'7 pH = {avg_voltage} V')
+        update_lcd(f'7 pH = {avg_voltage} V')
+        sleep_ms(5000)
 
 class config:
-    default_values = {'pH_config': 6.0}
-    data = None
+    data = {'pH_config': 6.0} #placeholder value
     def read():
-        try:
+        try: #read config.txt and update data values
             with open('config.txt', 'r') as file:
                 config.data = json.load(file)
                 file.close()
-        except OSError:
-            config.default()
-            with open('config.txt', 'r') as file:
-                config.data = json.load(file)
-                file.close()
-    def default():
-        with open('config.txt', 'w') as file:
-            json.dump(config.default_values, file)
-            file.close()
+                pH.calibration_value = config.data['pH_config']
+        except OSError: #Run calibration on required sensors generate config file if one does not exist
+            pH.calibrate_sensor()
+            pH.calibration_value = config.data['pH_config']
     def update(variable, value):
         if variable in config.data:
             del config.data[variable]
@@ -71,6 +65,8 @@ class config:
             file.close()
     
 class buttons:
+    #intergrate debounce function inside of class
+    #add pH calibration button
     button1 = Pin(32, Pin.IN, Pin.PULL_UP)
     button2 = Pin(33, Pin.IN, Pin.PULL_UP)
     button3 = Pin(25, Pin.IN, Pin.PULL_UP)
@@ -163,6 +159,8 @@ class pumps:
         CV = pumps.correct_value(CF, int(quantity))
         pumps.run_pump(pump, CV)
 
+#add water in/out funtionality
+
 def update_lcd(msg):
     lcd.clear()
     lcd.putstr(msg)
@@ -184,7 +182,7 @@ lcd = I2cLcd(i2c, I2C_ADDR, TOTAL_ROWS, TOTAL_COLUMNS)
 
 if __name__ == '__main__':
     config.read()
-    pH.calibrate_sensor()
+    #pH.calibrate_sensor()
     buttons.button1.irq(trigger = Pin.IRQ_FALLING, handler = buttons.decriment_mL)
     buttons.button2.irq(trigger = Pin.IRQ_FALLING, handler = buttons.incriment_mL)
     buttons.button3.irq(trigger = Pin.IRQ_FALLING, handler = buttons.incriment_pump)
