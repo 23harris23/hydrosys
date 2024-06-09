@@ -45,9 +45,9 @@ class char_str:
         return int_output
     def get_float(self):
         float_input = self.get_str(forbidden_chars = ['A', 'B', 'C'], limit_char = 'D')
+        float_input = float_input.replace('D', '.')
         float_input = self.no_leading_0(float_input)
-        return float_input
-
+        return float(float_input)
 
 
 class keypad:
