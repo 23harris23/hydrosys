@@ -41,13 +41,19 @@ class char_str:
         return out_str
     def get_int(self):
         int_output = (self.get_str(forbidden_chars = ['A', 'B', 'C', 'D']))
-        int_output = int(self.no_leading_0(int_output))
-        return int_output
+        if int_output == '':
+            return 0
+        else:
+            int_output = int(self.no_leading_0(int_output))
+            return int_output
     def get_float(self):
         float_input = self.get_str(forbidden_chars = ['A', 'B', 'C'], limit_char = 'D')
-        float_input = float_input.replace('D', '.')
-        float_input = self.no_leading_0(float_input)
-        return float(float_input)
+        if float_input == '':
+            return 0
+        else:
+            float_input = float_input.replace('D', '.')
+            float_input = self.no_leading_0(float_input)
+            return float(float_input)
 
 
 class keypad:
