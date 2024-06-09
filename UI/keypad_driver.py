@@ -22,7 +22,7 @@ class char_str:
             return input_char
         return ''
     def no_leading_0 (self, input_str):
-        if input_str[0] == '0':
+        while input_str[0] == '0':
             input_str = input_str[1:]
         return input_str
     def get_str(self, forbidden_chars = [], limit_char = ''):
@@ -41,11 +41,11 @@ class char_str:
         return out_str
     def get_int(self):
         int_output = (self.get_str(forbidden_chars = ['A', 'B', 'C', 'D']))
-        int_output = int(no_leading_0(int_output))
+        int_output = int(self.no_leading_0(int_output))
         return int_output
     def get_float(self):
         float_input = self.get_str(forbidden_chars = ['A', 'B', 'C'], limit_char = 'D')
-        float_input = no_leading_0(float_input)
+        float_input = self.no_leading_0(float_input)
         return float_input
 
 
@@ -90,9 +90,11 @@ if __name__ == '__main__':
     COLLUMNS = [33, 32, 12, 13]
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = char_str(kp.get_char)
+    '''
     for x in range(5):
         print(kp.get_char())
     print(kp_str.get_str())
+    '''
     #int_math_test = kp_str.get_int() + 3
     #print(int_math_test)
     print(kp_str.get_float())
