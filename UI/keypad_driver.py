@@ -5,6 +5,17 @@ from machine import Pin
 class char_str:
     ENTER_CHAR = '#'
     BACKSPACE_CHAR = '*'
+    CHAR_ROW0 = [0, ' ']
+    CHAR_ROW1 = [1, 'A', 'B', 'C']
+    CHAR_ROW2 = [2, 'D', 'E', 'F']
+    CHAR_ROW3 = [3, 'G', 'H', 'I']
+    CHAR_ROW4 = [4, 'J', 'K', 'L']
+    CHAR_ROW5 = [5, 'L', 'M', 'N']
+    CHAR_ROW6 = [6, 'O', 'P', 'R']
+    CHAR_ROW7 = [7, 'S', 'T', 'U']
+    CHAR_ROW8 = [8, 'V', 'W', 'X']
+    CHAR_ROW9 = [9, 'Y', 'Z']
+    NULL_ROW = ['']
     def __init__(self, char_callback, update = print):
         self.char_callback = char_callback
         self.update = update
@@ -54,6 +65,75 @@ class char_str:
             float_input = float_input.replace('D', '.')
             float_input = self.no_leading_0(float_input)
             return float(float_input)
+    def incremental_selector(self, max_position):
+        char = ''
+        position = 0
+        while char is not('#'):
+            char =  self.exclude_values(self.char_callback(), [1,2,3,4,5,6,7,8,9,'*','C','D'])
+            if char == 'A':
+                position -= 1
+                if position < 0:
+                    position = max_position
+            elif char == 'B':
+                position += 1
+                if position > max_position:
+                    position = 0
+            self.update(position)
+        return position
+    def get_char_row(self, value):
+        if value == 0:
+            return char_str.CHAR_ROW0
+        elif value == 1:
+            return char_str.CHAR_ROW1
+        elif value == 2:
+            return char_str.CHAR_ROW2
+        elif value == 3:
+            return char_str.CHAR_ROW3
+        elif value == 4:
+            return char_str.CHAR_ROW4
+        elif value == 5:
+            return char_str.CHAR_ROW5
+        elif value == 6:
+            return char_str.CHAR_ROW6
+        elif value == 7:
+            return char_str.CHAR_ROW7
+        elif value == 8:
+            return char_str.CHAR_ROW8
+        elif value == 9:
+            return char_str.CHAR_ROW9
+        else:
+            return char_str.NULL_ROW
+    def cycle_char_row(self, update_text = ''):
+        #fix need to press buttons multiple times to cycle inputs
+        starting_char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
+        position = 0
+        char_select = self.get_char_row(starting_char)
+        output_char = ''
+        if starting_char == '*' or starting_char == '#':
+            return starting_char
+        char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
+        while char == starting_char or char == '':
+            char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
+            if char == starting_char:
+                position += 1
+                if position >= len(char_select):
+                    position = 0
+                self.update(update_text + str(char_select[position]))
+                output_char = char_select[position]
+        return output_char
+    def get_alphanum(self):
+        char = ''
+        output = ''
+        while char is not('#'):
+            char = self.cycle_char_row(output)
+            if char == '*':
+                output = output[:-1]
+                char = ''
+                self.update(output)
+            output += str(char)
+            self.update(output)
+        output = output[:-1]
+        return output
 
 
 class keypad:
@@ -103,6 +183,9 @@ if __name__ == '__main__':
     '''
     #int_math_test = kp_str.get_int() + 3
     #print(int_math_test)
-    print(kp_str.get_float())
+    #print(kp_str.get_float())
+    #print(kp_str.incremental_selector(10))
+    #print(kp_str.cycle_char_row())
+    print(kp_str.get_alphanum())
         
     
