@@ -2,7 +2,7 @@ from time import sleep_ms
 from machine import Pin
 
 
-class char_str:
+class keypad_api:
     ENTER_CHAR = '#'
     BACKSPACE_CHAR = '*'
     CHAR_ROW0 = [0, ' ']
@@ -82,27 +82,27 @@ class char_str:
         return position
     def get_char_row(self, value):
         if value == 0:
-            return char_str.CHAR_ROW0
+            return keypad_api.CHAR_ROW0
         elif value == 1:
-            return char_str.CHAR_ROW1
+            return keypad_api.CHAR_ROW1
         elif value == 2:
-            return char_str.CHAR_ROW2
+            return keypad_api.CHAR_ROW2
         elif value == 3:
-            return char_str.CHAR_ROW3
+            return keypad_api.CHAR_ROW3
         elif value == 4:
-            return char_str.CHAR_ROW4
+            return keypad_api.CHAR_ROW4
         elif value == 5:
-            return char_str.CHAR_ROW5
+            return keypad_api.CHAR_ROW5
         elif value == 6:
-            return char_str.CHAR_ROW6
+            return keypad_api.CHAR_ROW6
         elif value == 7:
-            return char_str.CHAR_ROW7
+            return keypad_api.CHAR_ROW7
         elif value == 8:
-            return char_str.CHAR_ROW8
+            return keypad_api.CHAR_ROW8
         elif value == 9:
-            return char_str.CHAR_ROW9
+            return keypad_api.CHAR_ROW9
         else:
-            return char_str.NULL_ROW
+            return keypad_api.NULL_ROW
     def cycle_char_row(self, update_text = ''):
         #fix need to press buttons multiple times to cycle inputs
         starting_char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     ROWS = [14, 27, 26, 25]
     COLLUMNS = [33, 32, 12, 13]
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
-    kp_str = char_str(kp.get_char)
+    kp_str = keypad_api(kp.get_char)
     '''
     for x in range(5):
         print(kp.get_char())
