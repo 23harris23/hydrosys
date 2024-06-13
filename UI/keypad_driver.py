@@ -65,9 +65,10 @@ class keypad_api:
             float_input = float_input.replace('D', '.')
             float_input = self.no_leading_0(float_input)
             return float(float_input)
-    def incremental_selector(self, max_position):
+    def incremental_selector(self, input_list):
         char = ''
         position = 0
+        max_position = len(input_list) - 1
         while char is not('#'):
             char =  self.exclude_values(self.char_callback(), [1,2,3,4,5,6,7,8,9,'*','C','D'])
             if char == 'A':
@@ -78,8 +79,11 @@ class keypad_api:
                 position += 1
                 if position > max_position:
                     position = 0
-            self.update(position)
-        return position
+            if char == 'A' or char == 'B':
+                self.update(input_list[position])
+                char = ''
+            sleep_ms(100)
+        return input_list[position]
     def get_char_row(self, value):
         if value == 0:
             return keypad_api.CHAR_ROW0
@@ -184,7 +188,7 @@ if __name__ == '__main__':
     #int_math_test = kp_str.get_int() + 3
     #print(int_math_test)
     #print(kp_str.get_float())
-    #print(kp_str.incremental_selector(10))
+    #print(kp_str.incremental_selector(['a', 'b', 'c']))
     #print(kp_str.cycle_char_row())
     print(kp_str.get_alphanum())
         
