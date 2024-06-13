@@ -83,6 +83,7 @@ class keypad_api:
                 self.update(input_list[position])
                 char = ''
             sleep_ms(100)
+        self.update(f'{input_list[position]} Selected')
         return input_list[position]
     def get_char_row(self, value):
         if value == 0:
@@ -176,8 +177,8 @@ class keypad:
 
 
 if __name__ == '__main__':
-    ROWS = [14, 27, 26, 25]
-    COLLUMNS = [33, 32, 12, 13]
+    ROWS = [26, 25, 33, 32]
+    COLLUMNS = [35, 34, 39, 36]
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = keypad_api(kp.get_char)
     '''
@@ -188,8 +189,6 @@ if __name__ == '__main__':
     #int_math_test = kp_str.get_int() + 3
     #print(int_math_test)
     #print(kp_str.get_float())
-    #print(kp_str.incremental_selector(['a', 'b', 'c']))
+    print(kp_str.incremental_selector(['a', 'b', 'c']))
     #print(kp_str.cycle_char_row())
-    print(kp_str.get_alphanum())
-        
-    
+    #print(kp_str.get_alphanum())
