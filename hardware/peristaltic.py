@@ -1,10 +1,11 @@
-from machine import Pin
 from time import sleep_ms
 
+
 class Pump:
-    def __init__(self, pin, corrective_factor = 800):
-        self._p = Pin(pin, Pin.OUT)
+    def __init__(self, on_callback, off_callback, corrective_factor = 800):
         self.CF = corrective_factor
+        self.on_callback = on_callback
+        self.off_callback = off_callback
     def calibrate(self, target_mL, actual_mL):
         multiplier = target_mL / actual_mL
         self.CF = self.CF * multiplier
@@ -15,6 +16,6 @@ class Pump:
     def prime(self):
         self._run_pump(5000)
     def _run_pump(self, duration):
-        self._p.value(1)
+        self.on_callback()
         sleep_ms(duration)
-        self._p.value(0)
+        self.off_callback()
