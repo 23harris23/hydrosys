@@ -1,0 +1,6 @@
+from os import path
+
+
+class config:
+  def __init__(self, path):
+    
