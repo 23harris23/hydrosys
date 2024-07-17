@@ -1,6 +1,5 @@
 from water_in_test import water_inlet_valve
 import json
-import os
 
 
 VALVE_PIN = 23
