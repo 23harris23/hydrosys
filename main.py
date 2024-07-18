@@ -41,15 +41,15 @@ nutrient_4_config = config_manger.config_item(get_item_callback = nutrient_4.get
                                               set_item_callback = nutrient_4.set_config,
                                               name = 'Nutrient 4')
 config_list = [water_inlet_config, nutrient_1_config, nutrient_2_config, nutrient_3_config, nutrient_4_config]
-#menu definitions
+#UI/hardware interface functions
 def update_all_config(config_list): #saves all current config values
     for config_item in config_list:
         config_item.update_config_value()
 
-def incomplete_placeholder():
+def incomplete_placeholder(): #temporary function shows feature is incomplete
     print('incomplete')
 
-def generate_pump_dict(pump_list):
+def generate_pump_dict(pump_list): #generates dictionary of pumps using names as keys, useful for other functions
     pump_menu = {}
     for pump in pump_list:
         pump_menu[pump.name] = pump
@@ -67,17 +67,17 @@ def dispense_selector(pump_list): #select a pump by name and select a quantity t
     mL = kp_api.get_int()
     target_pump.dispense_mL(mL)
 
-def prime_all_pumps(pump_list):
+def prime_all_pumps(pump_list): #run each pump for 5s to fill line and ensure accuracy
     for pump in pump_list:
         pump.prime()
 
-def rename_pump(pump_list):
+def rename_pump(pump_list): #renames pump
     target_pump = select_pump_name(pump_list)
     new_name = kp_api.get_alphanum()
     target_pump.rename(new_name)
     update_all_config(config_list)
 
-def calibrate_pump(pump_list):
+def calibrate_pump(pump_list): #allows for pump calibration using a graduated cylender
     target_pump = select_pump_name(pump_list)
     print('dispensing 40 mL in 10s')
     sleep_ms(10000)
@@ -87,10 +87,10 @@ def calibrate_pump(pump_list):
     actual_mL = kp_api.get_float()
     target_pump.calibrate(40, actual_mL)
 
-def calibrate_water_in(water_valve):
+def calibrate_water_in(water_valve): #calibrates fill time for main tank
     water_valve.calibrate_fill_rate()
     update_all_config(config_list)
-
+#menu definitions
 main_menu = {'Water': lambda: menutils3.Index.goto('Watering Menu'), 
 'Settings': lambda: menutils3.Index.goto('Settings Menu'), 
 'Calibration': lambda: menutils3.Index.goto('Calibration Menu')}
@@ -121,4 +121,3 @@ if __name__ == '__main__':
         while True:
             target = kp_api.incremental_selector(menutils3.Index.current_index)
             menutils3.Index.execute_functions(target)
-
