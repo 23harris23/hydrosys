@@ -176,7 +176,12 @@ class keypad:
         return char
 
 def dummy_keypad():
-    return input('char: ')
+    char = input('char: ')
+    try:
+        char = int(char)
+    except:
+        pass
+    return char
 
 if __name__ == '__main__':
     
