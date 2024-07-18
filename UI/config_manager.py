@@ -1,8 +1,5 @@
-from water_in_test import water_inlet_valve
 import json
 
-
-VALVE_PIN = 23
 
 class config_file:
     PATH = 'conf.json'
@@ -55,14 +52,6 @@ class config_item(config_file):
         else:
             entry = self.get_item_callback()
             config_file.set_config_entry(self.name, self.get_item_callback())
-
-
-if __name__ == '__main__':
-    valve1 = water_inlet_valve(VALVE_PIN)
-    valve1_config = config_item(get_item_callback = valve1.get_fill_rate, set_item_callback = valve1.set_fill_rate, name = 'Water In Flow Rate')
-    test_val = valve1_config.get_value()
-    print(f'{test_val * 3} ms for test')
-    valve1.fill_quantity(3)
-
-    
+    def update_config_value(self):
+        self.set_item(self.get_value())
 
