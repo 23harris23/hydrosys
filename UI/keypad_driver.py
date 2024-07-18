@@ -175,12 +175,16 @@ class keypad:
         char = self.key_map[state[0]][state[1]]
         return char
 
+def dummy_keypad():
+    return input('char: ')
 
 if __name__ == '__main__':
+    
     ROWS = [26, 25, 33, 32]
     COLLUMNS = [35, 34, 39, 36]
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = keypad_api(kp.get_char)
+    kp_str = keypad_api(dummy_keypad)
     '''
     for x in range(5):
         print(kp.get_char())
@@ -192,3 +196,4 @@ if __name__ == '__main__':
     print(kp_str.incremental_selector(['a', 'b', 'c']))
     #print(kp_str.cycle_char_row())
     #print(kp_str.get_alphanum())
+
