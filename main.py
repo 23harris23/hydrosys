@@ -7,17 +7,20 @@ from time import sleep_ms
 
 
 #Pin definitions
-KEYPAD_ROWS = [26, 25, 33, 32]
-KEYPAD_COLLUMNS = [35, 34, 39, 36]
-VALVE_PIN = 23
+KEYPAD_ROWS = [15, 2, 0, 4]
+KEYPAD_COLLUMNS = [16, 17, 5, 18]
+VALVE_PIN = 26
 SR_SCK = 14
 SR_RCK = 12
 SR_Q = 27
+I2C_SCL = 22
+I2C_SDA = 23
 #hardware definitions
+lcd = menutils3.lcd_output(scl = I2C_SCL, sda = I2C_SDA)
 bus_12v = sr595.sr_595(SR_Q, SR_SCK, SR_RCK)
 water_inlet = h2o_in.water_inlet_valve(VALVE_PIN)
 kp = keypad_driver.keypad(KEYPAD_ROWS, KEYPAD_COLLUMNS, keypad_driver.keypad.MAP_16X)
-kp_api = keypad_driver.keypad_api(keypad_driver.dummy_keypad)
+kp_api = keypad_driver.keypad_api(kp.get_char, lcd.lcd_write)
 #nutrient pump definitions
 nutrient_1 = peristaltic.instalize_595_pump(1, bus_12v, 'n1')
 nutrient_2 = peristaltic.instalize_595_pump(2, bus_12v, 'n2')
@@ -113,8 +116,8 @@ Calibration_Menu = menutils3.Menu(calibration_menu, 'Calibration Menu')
 
 if __name__ == '__main__':
     test_val = water_inlet_config.get_value()
-    print(f'{test_val} ms for test')
-    prime_all_pumps(pump_list)
+    #print(f'{test_val} ms for test')
+    #prime_all_pumps(pump_list)
     #dispense_selector(pump_list)
     if __name__ == '__main__':
         menutils3.Index.goto('Main Menu')
