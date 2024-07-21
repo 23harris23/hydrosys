@@ -146,7 +146,7 @@ class keypad:
     [4,5,6,'B'],
     [7,8,9,'C'],
     ['*',0,'#','D']]
-    def __init__(self, rows, collumns, key_map, debounce_time = 200):
+    def __init__(self, rows, collumns, key_map, debounce_time = 300):
         self.rows = [Pin(pin, Pin.OUT) for pin in rows]
         self.collumns = [Pin(pin, Pin.IN, Pin.PULL_DOWN) for pin in collumns]
         self.key_map = key_map
@@ -174,6 +174,7 @@ class keypad:
             sleep_ms(self.debounce_time)
         char = self.key_map[state[0]][state[1]]
         return char
+             
 
 def dummy_keypad():
     char = input('char: ')
@@ -185,11 +186,16 @@ def dummy_keypad():
 
 if __name__ == '__main__':
     
-    ROWS = [26, 25, 33, 32]
-    COLLUMNS = [35, 34, 39, 36]
+    ROWS = [15, 2, 0, 4]
+    COLLUMNS = [16, 17, 5, 18]
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = keypad_api(kp.get_char)
-    kp_str = keypad_api(dummy_keypad)
+    #kp_str = keypad_api(dummy_keypad)
+    while True:
+        #print(kp.get_debounce_char())
+        print(kp.get_char())
+        #sleep_ms(100)
+    
     '''
     for x in range(5):
         print(kp.get_char())
@@ -198,7 +204,6 @@ if __name__ == '__main__':
     #int_math_test = kp_str.get_int() + 3
     #print(int_math_test)
     #print(kp_str.get_float())
-    print(kp_str.incremental_selector(['a', 'b', 'c']))
+    #print(kp_str.incremental_selector(['a', 'b', 'c']))
     #print(kp_str.cycle_char_row())
     #print(kp_str.get_alphanum())
-
