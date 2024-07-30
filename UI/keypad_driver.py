@@ -19,12 +19,7 @@ class keypad_api:
     def __init__(self, char_callback, update = print):
         self.char_callback = char_callback
         self.update = update
-    def exclude_values(self, input_char, values): #Used to exclude certain keys from input
-        values = list(values) + [None]
-        if input_char in values:
-            input_char = ''
-        return input_char
-    def exclude_char(self, values):
+    def exclude_char(self, values): #excludes a list of characters when using char_callback, all excluded chars return as ''
         values = list(values) + [None]
         input_char = self.char_callback()
         if input_char in values:
@@ -42,11 +37,11 @@ class keypad_api:
         while input_str[0] == '0':
             input_str = input_str[1:]
         return input_str
-    def get_str(self, forbidden_chars = [], limit_char = ''): #Used to get string from multiple key presses
+    def get_str(self, forbidden_chars = [], limit_char = ''): #Used to get string from multiple key presses only gets 1st values of keys
         out_str = ''
         char = ''
         while char is not('#'):
-            char = self.exclude_values(self.char_callback(), forbidden_chars)
+            char = self.exclude_char(forbidden_chars)
             char = str(char)
             char = self.limit_char(char, out_str, limit_char)
             if char == '*': #uses '*' as a backspace function
@@ -76,7 +71,7 @@ class keypad_api:
         position = 0
         max_position = len(input_list) - 1
         while char is not('#'):
-            char =  self.exclude_values(self.char_callback(), [1,2,3,4,5,6,7,8,9,'*','C','D'])
+            char =  self.exclude_char([1,2,3,4,5,6,7,8,9,'*','C','D'])
             if char == 'A':
                 position -= 1
                 if position < 0:
@@ -135,7 +130,7 @@ class keypad_api:
                 current_char = char_row[position]
                 self.update(update_text + str(current_char))
         return (current_char, current_key)
-    def get_alphanum(self):
+    def get_alphanum(self): #get an alphanumeric value from keypad, each number can cycle through several letters
         output_str = ''
         key_data = self.count_key_press(self.exclude_char(['A', 'B', 'D']))
         selected_char = str(key_data[0])
@@ -202,6 +197,7 @@ if __name__ == '__main__':
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = keypad_api(kp.get_char)
     #kp_str = keypad_api(dummy_keypad)
+    print(kp_str.get_str())
     print(kp_str.get_int())
     print(kp_str.get_alphanum())
     print(kp_str.get_float())
