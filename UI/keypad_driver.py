@@ -5,7 +5,7 @@ from machine import Pin
 class keypad_api:
     ENTER_CHAR = '#'
     BACKSPACE_CHAR = '*'
-    CHAR_ROW0 = [0, ' ']
+    CHAR_ROW0 = [0, '_']
     CHAR_ROW1 = [1, 'A', 'B', 'C']
     CHAR_ROW2 = [2, 'D', 'E', 'F']
     CHAR_ROW3 = [3, 'G', 'H', 'I']
@@ -19,12 +19,18 @@ class keypad_api:
     def __init__(self, char_callback, update = print):
         self.char_callback = char_callback
         self.update = update
-    def exclude_values(self, input_char, values):
+    def exclude_values(self, input_char, values): #Used to exclude certain keys from input
         values = list(values) + [None]
         if input_char in values:
             input_char = ''
         return input_char
-    def limit_char(self, input_char, input_string, target_char, n = 1):
+    def exclude_char(self, values):
+        values = list(values) + [None]
+        input_char = self.char_callback()
+        if input_char in values:
+            input_char = ''
+        return input_char
+    def limit_char(self, input_char, input_string, target_char, n = 1): #Used to limit number of times a key can be pressed mostly used with the decimal in floats
         if target_char == '' or target_char is None:
             return input_char
         elif input_string.count(target_char) < n and input_char == target_char:
@@ -32,11 +38,11 @@ class keypad_api:
         elif input_char != target_char:
             return input_char
         return ''
-    def no_leading_0 (self, input_str):
+    def no_leading_0 (self, input_str): #Prevents a string from beginning with 0 useful for getting numerical input from keypad
         while input_str[0] == '0':
             input_str = input_str[1:]
         return input_str
-    def get_str(self, forbidden_chars = [], limit_char = ''):
+    def get_str(self, forbidden_chars = [], limit_char = ''): #Used to get string from multiple key presses
         out_str = ''
         char = ''
         while char is not('#'):
@@ -50,14 +56,14 @@ class keypad_api:
             self.update(out_str)
         out_str = out_str[:-1]
         return out_str
-    def get_int(self):
+    def get_int(self): #Get an integer from keypresses
         int_output = (self.get_str(forbidden_chars = ['A', 'B', 'C', 'D']))
         if int_output == '':
             return 0
         else:
             int_output = int(self.no_leading_0(int_output))
             return int_output
-    def get_float(self):
+    def get_float(self): #Get float from keypresses
         float_input = self.get_str(forbidden_chars = ['A', 'B', 'C'], limit_char = 'D')
         if float_input == '':
             return 0
@@ -65,7 +71,7 @@ class keypad_api:
             float_input = float_input.replace('D', '.')
             float_input = self.no_leading_0(float_input)
             return float(float_input)
-    def incremental_selector(self, input_list):
+    def incremental_selector(self, input_list): #Used to cycle through a list and pick an entry
         char = ''
         position = 0
         max_position = len(input_list) - 1
@@ -108,38 +114,43 @@ class keypad_api:
             return keypad_api.CHAR_ROW9
         else:
             return keypad_api.NULL_ROW
-    def cycle_char_row(self, update_text = ''):
-        #fix need to press buttons multiple times to cycle inputs
-        starting_char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
+    def count_key_press(self, starting_key, update_text = ''):
+        '''
+        Allows user to scroll through number and letters. Each identical press scrolls through assigned characters. A key
+        press that differs from the starting key will return the selected character and the key that differs from the starting
+        key. This allows the break key to be fed into another count_key_press function in order to scroll through different
+        character rows. This function is primarily used to get alphanumeric strings.
+        '''
         position = 0
-        char_select = self.get_char_row(starting_char)
-        output_char = ''
-        if starting_char == '*' or starting_char == '#':
-            return starting_char
-        char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
-        while char == starting_char or char == '':
-            char = self.exclude_values(self.char_callback(), ['A', 'B', 'D'])
-            if char == starting_char:
+        char_row = self.get_char_row(starting_key)
+        current_key = starting_key
+        current_char = char_row[position]
+        self.update(update_text + str(current_char))
+        while (current_key == starting_key) and (current_key != '*') and (current_key != '#'):
+            current_key = self.exclude_char(['A', 'B', 'D'])
+            if current_key == starting_key:
                 position += 1
-                if position >= len(char_select):
+                if position >= len(char_row):
                     position = 0
-                self.update(update_text + str(char_select[position]))
-                output_char = char_select[position]
-        return output_char
+                current_char = char_row[position]
+                self.update(update_text + str(current_char))
+        return (current_char, current_key)
     def get_alphanum(self):
-        char = ''
-        output = ''
-        while char is not('#'):
-            char = self.cycle_char_row(output)
-            if char == '*':
-                output = output[:-1]
-                char = ''
-                self.update(output)
-            output += str(char)
-            self.update(output)
-        output = output[:-1]
-        return output
-
+        output_str = ''
+        key_data = self.count_key_press(self.exclude_char(['A', 'B', 'D']))
+        selected_char = str(key_data[0])
+        next_key = key_data[1]
+        output_str += selected_char
+        while next_key != '#':
+            key_data = self.count_key_press(self.exclude_char(['A', 'B', 'D']), update_text = output_str)
+            selected_char = str(key_data[0])
+            next_key = key_data[1]
+            output_str += selected_char
+            if next_key == '*':
+                output_str = output_str[:-1]
+            self.update(output_str)
+        return output_str
+            
 
 class keypad:
     MAP_16X = [[1,2,3,'A'],
@@ -191,19 +202,7 @@ if __name__ == '__main__':
     kp = keypad(ROWS, COLLUMNS, keypad.MAP_16X)
     kp_str = keypad_api(kp.get_char)
     #kp_str = keypad_api(dummy_keypad)
-    while True:
-        #print(kp.get_debounce_char())
-        print(kp.get_char())
-        #sleep_ms(100)
-    
-    '''
-    for x in range(5):
-        print(kp.get_char())
-    print(kp_str.get_str())
-    '''
-    #int_math_test = kp_str.get_int() + 3
-    #print(int_math_test)
-    #print(kp_str.get_float())
-    #print(kp_str.incremental_selector(['a', 'b', 'c']))
-    #print(kp_str.cycle_char_row())
-    #print(kp_str.get_alphanum())
+    print(kp_str.get_int())
+    print(kp_str.get_alphanum())
+    print(kp_str.get_float())
+    print(kp_str.incremental_selector(['a', 'b', 'c']))
