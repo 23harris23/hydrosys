@@ -12,20 +12,20 @@ KEYPAD_COLLUMNS = [16, 17, 5, 18]
 VALVE_PIN = 26
 SR_SCK = 14
 SR_RCK = 12
-SR_Q = 27
+SR_Q = 13
 I2C_SCL = 22
 I2C_SDA = 23
 #hardware definitions
 lcd = menutils3.lcd_output(scl = I2C_SCL, sda = I2C_SDA)
-bus_12v = sr595.sr_595(SR_Q, SR_SCK, SR_RCK)
+bus_12v = sr595.sr_595(ser = SR_Q, srclk = SR_SCK, rclk = SR_RCK)
 water_inlet = h2o_in.water_inlet_valve(VALVE_PIN)
 kp = keypad_driver.keypad(KEYPAD_ROWS, KEYPAD_COLLUMNS, keypad_driver.keypad.MAP_16X)
 kp_api = keypad_driver.keypad_api(kp.get_char, lcd.lcd_write)
 #nutrient pump definitions
-nutrient_1 = peristaltic.instalize_595_pump(1, bus_12v, 'n1')
-nutrient_2 = peristaltic.instalize_595_pump(2, bus_12v, 'n2')
-nutrient_3 = peristaltic.instalize_595_pump(3, bus_12v, 'n3')
-nutrient_4 = peristaltic.instalize_595_pump(4, bus_12v, 'n4')
+nutrient_1 = peristaltic.instalize_595_pump(5, bus_12v, 'n1')
+nutrient_2 = peristaltic.instalize_595_pump(6, bus_12v, 'n2')
+nutrient_3 = peristaltic.instalize_595_pump(7, bus_12v, 'n3')
+nutrient_4 = peristaltic.instalize_595_pump(8, bus_12v, 'n4')
 pump_list = [nutrient_1, nutrient_2, nutrient_3, nutrient_4]
 #config definitions
 water_inlet_config = config_manger.config_item(get_item_callback = water_inlet.get_fill_rate,
@@ -89,6 +89,7 @@ def calibrate_pump(pump_list): #allows for pump calibration using a graduated cy
     sleep_ms(3000)
     actual_mL = kp_api.get_float()
     target_pump.calibrate(40, actual_mL)
+    update_all_config(config_list)
 
 def calibrate_water_in(water_valve): #calibrates fill time for main tank
     water_valve.calibrate_fill_rate()
@@ -115,12 +116,14 @@ Settings_Menu = menutils3.Menu(settings_menu, 'Settings Menu')
 Calibration_Menu = menutils3.Menu(calibration_menu, 'Calibration Menu')
 
 if __name__ == '__main__':
-    test_val = water_inlet_config.get_value()
+    #test_val = water_inlet_config.get_value()
     #print(f'{test_val} ms for test')
     #prime_all_pumps(pump_list)
     #dispense_selector(pump_list)
+    print('ready') #
     if __name__ == '__main__':
         menutils3.Index.goto('Main Menu')
         while True:
             target = kp_api.incremental_selector(menutils3.Index.current_index)
             menutils3.Index.execute_functions(target)
+
