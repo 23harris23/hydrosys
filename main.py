@@ -1,9 +1,9 @@
 from sys import path
+from time import sleep_ms
 path.append('/UI/')
 path.append('/hardware/')
 from UI import config_manger, menutils3, keypad_driver
 from hardware import h2o_in, sr595, peristaltic
-from time import sleep_ms
 
 
 #Pin definitions
@@ -45,6 +45,13 @@ nutrient_4_config = config_manger.config_item(get_item_callback = nutrient_4.get
                                               name = 'Nutrient 4')
 config_list = [water_inlet_config, nutrient_1_config, nutrient_2_config, nutrient_3_config, nutrient_4_config]
 #UI/hardware interface functions
+def countdown(message, time_s):
+    for t in range(time_s):
+        remaining_time = time_s - t
+        lcd.lcd_write(f'{message} {remaining_time}s')
+        sleep_ms(1000)
+    lcd.lcd_write(f'{message} 0s')
+        
 def update_all_config(config_list): #saves all current config values
     for config_item in config_list:
         config_item.update_config_value()
@@ -82,33 +89,44 @@ def rename_pump(pump_list): #renames pump
 
 def calibrate_pump(pump_list): #allows for pump calibration using a graduated cylender
     target_pump = select_pump_name(pump_list)
+    '''
     print('dispensing 40 mL in 10s')
     sleep_ms(10000)
+    '''
+    countdown(message = 'Dispensing 40 mL in', time_s = 10)
     target_pump.dispense_mL(40)
-    print('Done, enter actual mL quantity')
-    sleep_ms(3000)
+    lcd.lcd_write('Done, enter actual mL quantity')
+    #sleep_ms(3000)
     actual_mL = kp_api.get_float()
     target_pump.calibrate(40, actual_mL)
     update_all_config(config_list)
 
 def calibrate_water_in(water_valve): #calibrates fill time for main tank
+    countdown(message = 'Filling tank in', time_s = 10)
     water_valve.calibrate_fill_rate()
     update_all_config(config_list)
+
+#menu_goto_functions
+go_to = menutils3.Index.goto
+goto_main = lambda: go_to('Main Menu')
+goto_watering = lambda: go_to('Watering Menu')
+goto_settings = lambda: go_to('Settings Menu')
+goto_calibration = lambda: go_to('Calibration Menu')
 #menu definitions
-main_menu = {'Water': lambda: menutils3.Index.goto('Watering Menu'), 
-'Settings': lambda: menutils3.Index.goto('Settings Menu'), 
-'Calibration': lambda: menutils3.Index.goto('Calibration Menu')}
+main_menu = {'Water': goto_watering, 
+'Settings': goto_settings, 
+'Calibration': goto_calibration}
 watering_menu = {'Custom Watering': lambda: dispense_selector(pump_list), 
 'Preset watering': incomplete_placeholder,
-'Home': lambda: menutils3.Index.goto('Main Menu')}
+'Home': goto_main}
 settings_menu = {'Prime pumps': lambda: prime_all_pumps(pump_list), 
 'Create water preset': incomplete_placeholder,
 'Alias nutrient pumps': lambda: rename_pump(pump_list),
-'Home': lambda: menutils3.Index.goto('Main Menu')}
+'Home': goto_main}
 calibration_menu = {'Tank Fill': lambda: calibrate_water_in(water_inlet), 
 'pH sensor': incomplete_placeholder, 
 'Dose pumps': lambda: calibrate_pump(pump_list),
-'Home': lambda: menutils3.Index.goto('Main Menu')}
+'Home': goto_main}
 
 Main_Menu = menutils3.Menu(main_menu, 'Main Menu')
 Watering_Menu = menutils3.Menu(watering_menu, 'Watering Menu')
@@ -116,14 +134,9 @@ Settings_Menu = menutils3.Menu(settings_menu, 'Settings Menu')
 Calibration_Menu = menutils3.Menu(calibration_menu, 'Calibration Menu')
 
 if __name__ == '__main__':
-    #test_val = water_inlet_config.get_value()
-    #print(f'{test_val} ms for test')
-    #prime_all_pumps(pump_list)
-    #dispense_selector(pump_list)
     print('ready') #
     if __name__ == '__main__':
         menutils3.Index.goto('Main Menu')
         while True:
             target = kp_api.incremental_selector(menutils3.Index.current_index)
             menutils3.Index.execute_functions(target)
-
