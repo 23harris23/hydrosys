@@ -3,30 +3,33 @@ from time import sleep_ms
 path.append('/UI/')
 path.append('/hardware/')
 from UI import config_manger, menutils3, keypad_driver
-from hardware import h2o_in, sr595, peristaltic
+from hardware import h2o_in, sr595, peristaltic, simplepH
 
 
 #Pin definitions
 KEYPAD_ROWS = [15, 2, 0, 4]
 KEYPAD_COLLUMNS = [16, 17, 5, 18]
-VALVE_PIN = 26
-SR_SCK = 14
+VALVE_PIN = 25
+SR_SCK = 13
 SR_RCK = 12
-SR_Q = 13
+SR_Q = 14
 I2C_SCL = 22
 I2C_SDA = 23
+PH_ADC = 36
 #hardware definitions
 lcd = menutils3.lcd_output(scl = I2C_SCL, sda = I2C_SDA)
 bus_12v = sr595.sr_595(ser = SR_Q, srclk = SR_SCK, rclk = SR_RCK)
 water_inlet = h2o_in.water_inlet_valve(VALVE_PIN)
 kp = keypad_driver.keypad(KEYPAD_ROWS, KEYPAD_COLLUMNS, keypad_driver.keypad.MAP_16X)
 kp_api = keypad_driver.keypad_api(kp.get_char, lcd.lcd_write)
+pH_sensor = simplepH.pH(sensor_pin = PH_ADC)
 #nutrient pump definitions
 nutrient_1 = peristaltic.instalize_595_pump(5, bus_12v, 'n1')
 nutrient_2 = peristaltic.instalize_595_pump(6, bus_12v, 'n2')
 nutrient_3 = peristaltic.instalize_595_pump(7, bus_12v, 'n3')
 nutrient_4 = peristaltic.instalize_595_pump(8, bus_12v, 'n4')
-pump_list = [nutrient_1, nutrient_2, nutrient_3, nutrient_4]
+pump_list = [nutrient_1, nutrient_2, nutrient_3, nutrient_4] #Includes every peristaltic pump
+nutrient_pump_list = [nutrient_2, nutrient_3, nutrient_4] #Excludes pH control pumps
 #config definitions
 water_inlet_config = config_manger.config_item(get_item_callback = water_inlet.get_fill_rate,
                                                    set_item_callback = water_inlet.set_fill_rate,
@@ -43,7 +46,15 @@ nutrient_3_config = config_manger.config_item(get_item_callback = nutrient_3.get
 nutrient_4_config = config_manger.config_item(get_item_callback = nutrient_4.get_config,
                                               set_item_callback = nutrient_4.set_config,
                                               name = 'Nutrient 4')
-config_list = [water_inlet_config, nutrient_1_config, nutrient_2_config, nutrient_3_config, nutrient_4_config]
+pH_sensor_config = config_manger.config_item(get_item_callback = pH_sensor.get_config,
+                                             set_item_callback = pH_sensor.set_config,
+                                             name = 'pH Sensor')
+config_list = [water_inlet_config,
+               nutrient_1_config,
+               nutrient_2_config,
+               nutrient_3_config,
+               nutrient_4_config,
+               pH_sensor_config]
 #UI/hardware interface functions
 def countdown(message, time_s):
     for t in range(time_s):
@@ -89,14 +100,9 @@ def rename_pump(pump_list): #renames pump
 
 def calibrate_pump(pump_list): #allows for pump calibration using a graduated cylender
     target_pump = select_pump_name(pump_list)
-    '''
-    print('dispensing 40 mL in 10s')
-    sleep_ms(10000)
-    '''
     countdown(message = 'Dispensing 40 mL in', time_s = 10)
     target_pump.dispense_mL(40)
     lcd.lcd_write('Done, enter actual mL quantity')
-    #sleep_ms(3000)
     actual_mL = kp_api.get_float()
     target_pump.calibrate(40, actual_mL)
     update_all_config(config_list)
@@ -104,6 +110,12 @@ def calibrate_pump(pump_list): #allows for pump calibration using a graduated cy
 def calibrate_water_in(water_valve): #calibrates fill time for main tank
     countdown(message = 'Filling tank in', time_s = 10)
     water_valve.calibrate_fill_rate()
+    update_all_config(config_list)
+
+def calibrate_pH_sensor():
+    countdown(message = 'Insert probe into 7pH fluid in', time_s = 10)
+    countdown(message = 'Keep probe in fluid for', time_s = 30)
+    pH_sensor.calibrate()
     update_all_config(config_list)
 
 #menu_goto_functions
@@ -124,7 +136,7 @@ settings_menu = {'Prime pumps': lambda: prime_all_pumps(pump_list),
 'Alias nutrient pumps': lambda: rename_pump(pump_list),
 'Home': goto_main}
 calibration_menu = {'Tank Fill': lambda: calibrate_water_in(water_inlet), 
-'pH sensor': incomplete_placeholder, 
+'pH sensor': calibrate_pH_sensor, 
 'Dose pumps': lambda: calibrate_pump(pump_list),
 'Home': goto_main}
 
@@ -140,3 +152,4 @@ if __name__ == '__main__':
         while True:
             target = kp_api.incremental_selector(menutils3.Index.current_index)
             menutils3.Index.execute_functions(target)
+
