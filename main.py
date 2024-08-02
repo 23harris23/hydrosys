@@ -2,7 +2,7 @@ from sys import path
 from time import sleep_ms
 path.append('/UI/')
 path.append('/hardware/')
-from UI import config_manger, menutils3, keypad_driver
+from UI import config_manager, menutils3, keypad_driver
 from hardware import h2o_in, sr595, peristaltic, simplepH
 
 
@@ -16,6 +16,9 @@ SR_Q = 14
 I2C_SCL = 22
 I2C_SDA = 23
 PH_ADC = 36
+#path definitions
+HARDWARE_CONFIG_PATH = 'conf.json'
+NUTRIENT_PROFILE_CONFIG_PATH = 'nutrients.json'
 #hardware definitions
 lcd = menutils3.lcd_output(scl = I2C_SCL, sda = I2C_SDA)
 bus_12v = sr595.sr_595(ser = SR_Q, srclk = SR_SCK, rclk = SR_RCK)
@@ -31,24 +34,30 @@ nutrient_4 = peristaltic.instalize_595_pump(8, bus_12v, 'n4')
 pump_list = [nutrient_1, nutrient_2, nutrient_3, nutrient_4] #Includes every peristaltic pump
 nutrient_pump_list = [nutrient_2, nutrient_3, nutrient_4] #Excludes pH control pumps
 #config definitions
-water_inlet_config = config_manger.config_item(get_item_callback = water_inlet.get_fill_rate,
-                                                   set_item_callback = water_inlet.set_fill_rate,
-                                                   name = 'Water In Flow Rate')
-nutrient_1_config = config_manger.config_item(get_item_callback = nutrient_1.get_config,
+water_inlet_config = config_manager.config_item(get_item_callback = water_inlet.get_fill_rate,
+                                                set_item_callback = water_inlet.set_fill_rate,
+                                                name = 'Water In Flow Rate',
+                                                path = HARDWARE_CONFIG_PATH)
+nutrient_1_config = config_manager.config_item(get_item_callback = nutrient_1.get_config,
                                               set_item_callback = nutrient_1.set_config,
-                                              name = 'Nutrient 1')
-nutrient_2_config = config_manger.config_item(get_item_callback = nutrient_2.get_config,
-                                              set_item_callback = nutrient_2.set_config,
-                                              name = 'Nutrient 2')
-nutrient_3_config = config_manger.config_item(get_item_callback = nutrient_3.get_config,
-                                              set_item_callback = nutrient_3.set_config,
-                                              name = 'Nutrient 3')
-nutrient_4_config = config_manger.config_item(get_item_callback = nutrient_4.get_config,
-                                              set_item_callback = nutrient_4.set_config,
-                                              name = 'Nutrient 4')
-pH_sensor_config = config_manger.config_item(get_item_callback = pH_sensor.get_config,
-                                             set_item_callback = pH_sensor.set_config,
-                                             name = 'pH Sensor')
+                                              name = 'Nutrient 1',
+                                               path = HARDWARE_CONFIG_PATH)
+nutrient_2_config = config_manager.config_item(get_item_callback = nutrient_2.get_config,
+                                               set_item_callback = nutrient_2.set_config,
+                                               name = 'Nutrient 2',
+                                               path = HARDWARE_CONFIG_PATH)
+nutrient_3_config = config_manager.config_item(get_item_callback = nutrient_3.get_config,
+                                               set_item_callback = nutrient_3.set_config,
+                                               name = 'Nutrient 3',
+                                               path = HARDWARE_CONFIG_PATH)
+nutrient_4_config = config_manager.config_item(get_item_callback = nutrient_4.get_config,
+                                               set_item_callback = nutrient_4.set_config,
+                                               name = 'Nutrient 4',
+                                               path = HARDWARE_CONFIG_PATH)
+pH_sensor_config = config_manager.config_item(get_item_callback = pH_sensor.get_config,
+                                              set_item_callback = pH_sensor.set_config,
+                                              name = 'pH Sensor',
+                                              path = HARDWARE_CONFIG_PATH)
 config_list = [water_inlet_config,
                nutrient_1_config,
                nutrient_2_config,
@@ -152,4 +161,3 @@ if __name__ == '__main__':
         while True:
             target = kp_api.incremental_selector(menutils3.Index.current_index)
             menutils3.Index.execute_functions(target)
-
