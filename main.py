@@ -79,9 +79,6 @@ def update_all_config(config_list): #saves all current config values
     for config_item in config_list:
         config_item.update_config_value()
 
-def incomplete_placeholder(): #temporary function shows feature is incomplete
-    print('incomplete')
-
 def generate_pump_dict(pump_list): #generates dictionary of pumps using names as keys, useful for other functions
     pump_menu = {}
     for pump in pump_list:
@@ -129,9 +126,17 @@ def calibrate_water_in(water_valve): #calibrates fill time for main tank
     update_all_config(config_list)
 
 def calibrate_pH_sensor():
-    countdown(message = 'Insert probe into 7pH fluid in', time_s = 10)
+    countdown(message = 'Ready low pH fluid in', time_s = 10)
     countdown(message = 'Keep probe in fluid for', time_s = 30)
-    pH_sensor.calibrate()
+    lcd.lcd_write('Enter low pH value')
+    low_pH_value = kp_api.get_float()
+    low_pH_reading = pH_sensor.get_volts()
+    countdown(message = 'Ready high pH fluid in', time_s = 10)
+    countdown(message = 'Keep probe in fluid for', time_s = 30)
+    lcd.lcd_write('Enter high pH value')
+    high_pH_value = kp_api.get_float()
+    high_pH_reading = pH_sensor.get_volts()
+    pH_sensor.calibrate(low_pH_value, low_pH_reading, high_pH_value, high_pH_reading)
     update_all_config(config_list)
 
 def create_watering_preset():
