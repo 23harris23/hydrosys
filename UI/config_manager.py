@@ -42,13 +42,27 @@ class watering_profile_config(config_file):
         config_data = self.parse_config()
         watering_profile_names = list(config_data.keys())
         return watering_profile_names
+    def generate_numbered_dict(self, data):
+        output_dict = {}
+        data = OrderedDict(data)
+        i = 0
+        for entry in data:
+            output_dict[i] = (entry, data[entry])
+            i += 1
+        return output_dict
+    def generate_ordered_list(self, numbered_dict):
+        output_list = []
+        for i in range(len(numbered_dict)):
+            output_list.append(numbered_dict[str(i)])
+        return output_list
     def get_watering_data(self, watering_profile_name):
         watering_profile_data = self.get_config_entry(watering_profile_name)
-        profile_data = OrderedDict(reversed(list(watering_profile_data.items())))
-        return profile_data
+        ordered_profile_data = self.generate_ordered_list(watering_profile_data)
+        #profile_data = OrderedDict(reversed(list(watering_profile_data.items())))
+        return ordered_profile_data
     def update_watering_profile(self, profile_name, profile_data):
-        print(profile_data)
-        self.set_config_entry(profile_name, OrderedDict(profile_data))
+        profile_data = self.generate_numbered_dict(OrderedDict(profile_data))
+        self.set_config_entry(profile_name, profile_data)
 
 class config_item(config_file):
     def __init__(self, path, name, get_item_callback, set_item_callback):
@@ -72,4 +86,3 @@ class config_item(config_file):
             self.set_config_entry(self.name, self.get_item_callback())
     def update_config_value(self):
         self.set_item(self.get_value())
-        
