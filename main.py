@@ -1,5 +1,6 @@
 from sys import path
 from time import sleep_ms
+from collections import OrderedDict
 path.append('/UI/')
 path.append('/hardware/')
 from UI import config_manager, menutils3, keypad_driver
@@ -33,7 +34,7 @@ nutrient_3 = peristaltic.instalize_595_pump(7, bus_12v, 'n3')
 nutrient_4 = peristaltic.instalize_595_pump(8, bus_12v, 'n4')
 pump_list = [nutrient_1, nutrient_2, nutrient_3, nutrient_4] #Includes every peristaltic pump
 nutrient_pump_list = [nutrient_2, nutrient_3, nutrient_4] #Excludes pH control pumps
-#config definitions
+#hardware config definitions
 water_inlet_config = config_manager.config_item(get_item_callback = water_inlet.get_fill_rate,
                                                 set_item_callback = water_inlet.set_fill_rate,
                                                 name = 'Water In Flow Rate',
@@ -64,6 +65,8 @@ config_list = [water_inlet_config,
                nutrient_3_config,
                nutrient_4_config,
                pH_sensor_config]
+#nutrient dose profile config definitions
+watering_presets = config_manager.watering_profile_config(NUTRIENT_PROFILE_CONFIG_PATH)
 #UI/hardware interface functions
 def countdown(message, time_s):
     for t in range(time_s):
@@ -85,12 +88,16 @@ def generate_pump_dict(pump_list): #generates dictionary of pumps using names as
         pump_menu[pump.name] = pump
     return pump_menu
 
-def select_pump_name(pump_list): #select a pump by name
+def select_pump_name(pump_list): #select a pump by name from a list of pump objects using keypad
     pump_dict = generate_pump_dict(pump_list)
     name_list = list(pump_dict.keys())
     selected_name = kp_api.incremental_selector(name_list)
     selected_pump = pump_dict[selected_name]
     return selected_pump
+
+def get_pump_from_name(pump_name):
+    target_pump = generate_pump_dict(pump_list)[pump_name]
+    return target_pump
 
 def dispense_selector(pump_list): #select a pump by name and select a quantity to dispense
     target_pump = select_pump_name(pump_list)
@@ -127,6 +134,36 @@ def calibrate_pH_sensor():
     pH_sensor.calibrate()
     update_all_config(config_list)
 
+def create_watering_preset():
+    lcd.lcd_write('Enter preset name')
+    preset_name = kp_api.get_alphanum()
+    preset_data = OrderedDict({})
+    selectable_nutrients = nutrient_pump_list
+    for item in range(len(nutrient_pump_list)):
+        target_pump = select_pump_name(selectable_nutrients)
+        nutrient_name = target_pump.name
+        selectable_nutrients.pop(selectable_nutrients.index(target_pump))
+        lcd.lcd_write(f'{nutrient_name}mL per liter')
+        nutrient_ratio = kp_api.get_float()
+        print(f'{nutrient_name}: {nutrient_ratio}')
+        preset_data[nutrient_name] = nutrient_ratio
+    watering_presets.update_watering_profile(preset_name, preset_data)
+
+def select_watering_preset():
+    lcd.lcd_write('Select preset')
+    preset_list = watering_presets.get_watering_profiles()
+    target_preset = kp_api.incremental_selector(preset_list)
+    lcd.lcd_write('Enter total liters')
+    water_quanitity = kp_api.get_float()
+    preset_data = watering_presets.get_watering_data(target_preset)
+    for n in range(len(preset_data)):
+        nutrient_data = preset_data[n]
+        name = nutrient_data[0]
+        target_pump = get_pump_from_name(name)
+        quantity = nutrient_data[1] * water_quanitity
+        target_pump.dispense_mL(quantity)
+        
+
 #menu_goto_functions
 go_to = menutils3.Index.goto
 goto_main = lambda: go_to('Main Menu')
@@ -138,10 +175,10 @@ main_menu = {'Water': goto_watering,
 'Settings': goto_settings, 
 'Calibration': goto_calibration}
 watering_menu = {'Custom Watering': lambda: dispense_selector(pump_list), 
-'Preset watering': incomplete_placeholder,
+'Preset watering': select_watering_preset,
 'Home': goto_main}
 settings_menu = {'Prime pumps': lambda: prime_all_pumps(pump_list), 
-'Create water preset': incomplete_placeholder,
+'Create water preset': create_watering_preset,
 'Alias nutrient pumps': lambda: rename_pump(pump_list),
 'Home': goto_main}
 calibration_menu = {'Tank Fill': lambda: calibrate_water_in(water_inlet), 
