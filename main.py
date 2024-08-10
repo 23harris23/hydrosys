@@ -130,12 +130,12 @@ def calibrate_pH_sensor():
     countdown(message = 'Keep probe in fluid for', time_s = 30)
     lcd.lcd_write('Enter low pH value')
     low_pH_value = kp_api.get_float()
-    low_pH_reading = pH_sensor.get_volts()
+    low_pH_reading = pH_sensor.get_avg_volts(100)
     countdown(message = 'Ready high pH fluid in', time_s = 10)
     countdown(message = 'Keep probe in fluid for', time_s = 30)
     lcd.lcd_write('Enter high pH value')
     high_pH_value = kp_api.get_float()
-    high_pH_reading = pH_sensor.get_volts()
+    high_pH_reading = pH_sensor.get_avg_volts(100)
     pH_sensor.calibrate(low_pH_value, low_pH_reading, high_pH_value, high_pH_reading)
     update_all_config(config_list)
 
@@ -167,6 +167,10 @@ def select_watering_preset():
         target_pump = get_pump_from_name(name)
         quantity = nutrient_data[1] * water_quanitity
         target_pump.dispense_mL(quantity)
+
+def sample_pH_sensor():
+    pH = pH_sensor.get_pH()
+    lcd.lcd_write(f'{pH} pH')
         
 
 #menu_goto_functions
@@ -176,20 +180,21 @@ goto_watering = lambda: go_to('Watering Menu')
 goto_settings = lambda: go_to('Settings Menu')
 goto_calibration = lambda: go_to('Calibration Menu')
 #menu definitions
-main_menu = {'Water': goto_watering, 
-'Settings': goto_settings, 
-'Calibration': goto_calibration}
-watering_menu = {'Custom Watering': lambda: dispense_selector(pump_list), 
-'Preset watering': select_watering_preset,
-'Home': goto_main}
-settings_menu = {'Prime pumps': lambda: prime_all_pumps(pump_list), 
-'Create water preset': create_watering_preset,
-'Alias nutrient pumps': lambda: rename_pump(pump_list),
-'Home': goto_main}
-calibration_menu = {'Tank Fill': lambda: calibrate_water_in(water_inlet), 
-'pH sensor': calibrate_pH_sensor, 
-'Dose pumps': lambda: calibrate_pump(pump_list),
-'Home': goto_main}
+main_menu = {'Water': goto_watering,
+             'Settings': goto_settings,
+             'Calibration': goto_calibration}
+watering_menu = {'Custom Watering': lambda: dispense_selector(pump_list),
+                 'Preset watering': select_watering_preset,
+                 'Home': goto_main}
+settings_menu = {'Prime pumps': lambda: prime_all_pumps(pump_list),
+                 'Create water preset': create_watering_preset,
+                 'Alias nutrient pumps': lambda: rename_pump(pump_list),
+                 'Sample pH sensor': sample_pH_sensor,
+                 'Home': goto_main}
+calibration_menu = {'Tank Fill': lambda: calibrate_water_in(water_inlet),
+                    'pH sensor': calibrate_pH_sensor,
+                    'Dose pumps': lambda: calibrate_pump(pump_list),
+                    'Home': goto_main}
 
 Main_Menu = menutils3.Menu(main_menu, 'Main Menu')
 Watering_Menu = menutils3.Menu(watering_menu, 'Watering Menu')
