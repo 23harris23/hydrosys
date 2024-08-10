@@ -1,5 +1,6 @@
 from machine import Pin, ADC
 from time import sleep_ms
+from math import log
 
 class pH:
     def __init__(self, sensor_pin = 36, calibration_value = {}):
@@ -11,15 +12,15 @@ class pH:
     def get_volts(self):
         voltage = (self.sensor.read()/4095) * 3.3
         return voltage
-    def get_pH(self):
-        output_pH = self.calibration_value['slope'] * self.get_volts() + self.calibration_value['zero']
-        return output_pH
-    def average_pH(self, sample_size):
-        output_pH = 0
+    def get_avg_volts(self, sample_size):
+        avg_volts = 0
         for i in range(sample_size):
-            output_pH = output_pH + self.get_pH()
-            sleep_ms(10)
-        output_pH = output_pH / sample_size
+            avg_volts += self.get_volts()
+        avg_volts = avg_volts / sample_size
+        return avg_volts
+    def get_pH(self):
+        average_voltage = self.get_avg_volts(100)
+        output_pH = self.calibration_value['slope'] * average_voltage + self.calibration_value['zero']
         return output_pH
     def calibrate(self, low_pH_value, low_pH_reading, high_pH_value, high_pH_reading):
         #Probe must be submerged for 30s before calibration begins
@@ -32,3 +33,21 @@ class pH:
         return self.calibration_value
     def set_config(self, value):
         self.calibration_value = value
+
+def pH_to_H(pH): #converts pH to mol [H+] per L
+    charge_per_liter: float = (10 ** (-pH))
+    return charge_per_liter
+
+def H_to_pH(H): #converts mol [H+] per L to pH
+    pH: float = -log(H, 10)
+    return pH
+
+def solve_pH_addition(target_pH, additive_pH, current_pH, solution_volume):
+    #Finds the amount of pH down in mL to add to reduce the nutrient solution to a given pH
+    current_ion_concentration = pH_to_H(current_pH)
+    target_H = pH_to_H(target_pH)
+    additive_H = pH_to_H(additive_pH)
+    H_ion_difference = target_H - current_ion_concentration
+    additive_proportion = H_ion_difference / additive_H
+    additive_quantity = (additive_proportion * solution_volume) * 1000
+    return additive_quantity
